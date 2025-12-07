@@ -1,46 +1,44 @@
-"use client";
-
-import { useState } from "react";
+import { auth } from "@/libs/next-auth";
+import connectMongo from "@/libs/mongoose";
+import User from "@/models/User";
 import ButtonAccount from "@/components/ButtonAccount";
-import apiClient from "@/libs/api";
 
 // This is a private page: It's protected by the layout.js component which ensures the user is authenticated.
 // See https://shipfa.st/docs/tutorials/private-page
-export default function Dashboard() {
-  const [isLoading, setIsLoading] = useState(false);
+export default async function Dashboard() {
+  await connectMongo();
+  const session = await auth();
 
-  const saveUser = async () => {
-    setIsLoading(true);
+  if (!session?.user?.id) {
+    return (
+      <main className="min-h-screen p-8 pb-24">
+        <section className="max-w-xl mx-auto space-y-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold">
+            User Dashboard
+          </h1>
+          <p>No session found</p>
+        </section>
+      </main>
+    );
+  }
 
-    try {
-      const { data } = await apiClient.post("/user", {
-        email: "new@gmail.com",
-      });
-
-      console.log(data);
-    } catch (e: any) {
-      console.error(e.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const user = await User.findById(session.user.id);
+  const displayName = session.user.name || user?.name || "User";
+  const displayEmail = session.user.email || user?.email || "";
 
   return (
     <main className="min-h-screen p-8 pb-24">
       <section className="max-w-xl mx-auto space-y-8">
         <ButtonAccount />
-        <h1 className="text-3xl md:text-4xl font-extrabold">Private Page</h1>
-
-        <button
-          className="btn btn-primary"
-          onClick={() => saveUser()}
-          disabled={isLoading}
-        >
-          {isLoading && (
-            <span className="loading loading-spinner loading-sm"></span>
-          )}
-          Save
-        </button>
+        <h1 className="text-3xl md:text-4xl font-extrabold">User Dashboard</h1>
+        <p>Welcome {displayName} 👋</p>
+        <p>Your email is {displayEmail || "Not set"}</p>
+        <form action="/api/user" method="POST" className="space-y-2">
+          <input type="hidden" name="email" value={displayEmail} />
+          <button type="submit" className="btn btn-primary">
+            Save
+          </button>
+        </form>
       </section>
     </main>
   );
