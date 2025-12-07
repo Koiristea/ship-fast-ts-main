@@ -2,6 +2,10 @@ import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import ButtonAccount from "@/components/ButtonAccount";
+import ButtonCheckout from "@/components/ButtonCheckout";
+import config from "@/config";
+
+export const dynamic = "force-dynamic";
 
 // This is a private page: It's protected by the layout.js component which ensures the user is authenticated.
 // See https://shipfa.st/docs/tutorials/private-page
@@ -23,8 +27,8 @@ export default async function Dashboard() {
   }
 
   const user = await User.findById(session.user.id);
-  const displayName = session.user.name || user?.name || "User";
-  const displayEmail = session.user.email || user?.email || "";
+  const displayName = user?.name || session.user.name || "User";
+  const displayEmail = user?.email || session.user.email || "";
 
   return (
     <main className="min-h-screen p-8 pb-24">
@@ -39,6 +43,15 @@ export default async function Dashboard() {
             Save
           </button>
         </form>
+
+        <h1 className="text-3xl md:text-4xl font-extrabold">
+          Subscribe to get access:
+        </h1>
+
+        <ButtonCheckout
+          mode="subscription"
+          priceId={config.stripe.plans[0].priceId}
+        />
       </section>
     </main>
   );
