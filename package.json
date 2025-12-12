@@ -1,0 +1,8 @@
+{
+  "name": "ship-fast-wrapper",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "cd ship-fast-ts-main && npm run dev",
+    "start": "cd ship-fast-ts-main && npm start"
+  }
+}
