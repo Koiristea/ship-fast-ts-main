@@ -170,6 +170,7 @@ export type articleType = {
   slug: string;
   title: string;
   description: string;
+  keywords?: string[];
   categories: categoryType[];
   author: authorType;
   publishedAt: string;
@@ -206,6 +207,8 @@ export const articles: articleType[] = [
     // The description of the article to display in the article page. Up to 160 characters. It's also used to generate the meta description.
     description:
       "Supabase is an open-source Firebase alternative. It's a great tool for building a backend for your app. It's now integrated with ShipFast!",
+    // Keywords for SEO. Used in meta keywords tag.
+    keywords: ["Supabase", "Firebase", "Backend", "Database", "ShipFast"],
     // An array of categories of the article. It's used to generate the category badges, the category filter, and more.
     categories: [
       categories.find((category) => category.slug === categorySlugs.feature),
