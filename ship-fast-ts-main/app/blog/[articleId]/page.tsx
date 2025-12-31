@@ -12,39 +12,27 @@ export async function generateMetadata({
   params: Promise<{ articleId: string }>;
 }) {
   const resolvedParams = await params;
-  const article = articles.find(
-    (article) => article.slug === resolvedParams.articleId
-  );
-
-  if (!article) {
-    return getSEOTags({
-      title: "Article not found",
-      description: "The article you're looking for doesn't exist.",
-    });
-  }
+  const article = articles.find((article) => article.slug === resolvedParams.articleId);
 
   return getSEOTags({
     title: article.title,
     description: article.description,
-    keywords: article.keywords,
     canonicalUrlRelative: `/blog/${article.slug}`,
-    openGraph: {
-      title: article.title,
-      description: article.description,
-      url: `/blog/${article.slug}`,
-      type: "article",
-      images: [
-        {
-          url: article.image.urlRelative,
-          width: 1200,
-          height: 660,
-          alt: article.image.alt,
-        },
-      ],
-    },
     extraTags: {
-      articlePublishedTime: article.publishedAt,
-      articleAuthor: article.author.name,
+      openGraph: {
+        title: article.title,
+        description: article.description,
+        url: `/blog/${article.slug}`,
+        images: [
+          {
+            url: article.image.urlRelative,
+            width: 1200,
+            height: 660,
+          },
+        ],
+        locale: "en_US",
+        type: "website",
+      },
     },
   });
 }
@@ -55,9 +43,7 @@ export default async function Article({
   params: Promise<{ articleId: string }>;
 }) {
   const resolvedParams = await params;
-  const article = articles.find(
-    (article) => article.slug === resolvedParams.articleId
-  );
+  const article = articles.find((article) => article.slug === resolvedParams.articleId);
   const articlesRelated = articles
     .filter(
       (a) =>
