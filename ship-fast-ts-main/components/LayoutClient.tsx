@@ -9,6 +9,12 @@ import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "react-hot-toast";
 import { Tooltip } from "react-tooltip";
 import config from "@/config";
+import { AppSidebar } from "@/components/app-sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 // Crisp customer chat support:
 // This component is separated from ClientLayout because it needs to be wrapped with <SessionProvider> to use useSession() hook
@@ -55,27 +61,37 @@ const ClientLayout = ({ children }: { children: ReactNode }) => {
   return (
     <>
       <SessionProvider>
-        {/* Show a progress bar at the top when navigating between pages */}
-        <NextTopLoader color={config.colors.main} showSpinner={false} />
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="min-h-screen flex flex-col">
+            {/* Show a progress bar at the top when navigating between pages */}
+            <NextTopLoader color={config.colors.main} showSpinner={false} />
 
-        {/* Content inside app/page.js files  */}
-        {children}
+            {/* Floating sidebar trigger */}
+            <div className="fixed bottom-4 left-4 z-50">
+              <SidebarTrigger className="border bg-background shadow-md" />
+            </div>
 
-        {/* Show Success/Error messages anywhere from the app with toast() */}
-        <Toaster
-          toastOptions={{
-            duration: 3000,
-          }}
-        />
+            {/* Content inside app/page.js files  */}
+            {children}
 
-        {/* Show a tooltip if any JSX element has these 2 attributes: data-tooltip-id="tooltip" data-tooltip-content="" */}
-        <Tooltip
-          id="tooltip"
-          className="z-[60] !opacity-100 max-w-sm shadow-lg"
-        />
+            {/* Show Success/Error messages anywhere from the app with toast() */}
+            <Toaster
+              toastOptions={{
+                duration: 3000,
+              }}
+            />
 
-        {/* Set Crisp customer chat support */}
-        <CrispChat />
+            {/* Show a tooltip if any JSX element has these 2 attributes: data-tooltip-id="tooltip" data-tooltip-content="" */}
+            <Tooltip
+              id="tooltip"
+              className="z-[60] !opacity-100 max-w-sm shadow-lg"
+            />
+
+            {/* Set Crisp customer chat support */}
+            <CrispChat />
+          </SidebarInset>
+        </SidebarProvider>
       </SessionProvider>
     </>
   );
