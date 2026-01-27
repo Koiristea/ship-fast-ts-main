@@ -53,6 +53,27 @@ export const authOptions = {
       }
       return session;
     },
+    signIn: async ({ user, account, profile }: any) => {
+      // This callback is called whenever a user signs in
+      // Ensure the user document in MongoDB has all required fields
+      if (connectMongo && user.email) {
+        try {
+          const User = require("@/models/User").default;
+          const existingUser = await User.findOne({ email: user.email });
+
+          // If user doesn't exist, MongoDB Adapter will create it
+          // If user exists but doesn't have hasAccess, add it
+          if (existingUser && existingUser.hasAccess === undefined) {
+            existingUser.hasAccess = false;
+            await existingUser.save();
+          }
+        } catch (error) {
+          console.error("Error in signIn callback:", error);
+          // Don't fail sign in if there's a database error
+        }
+      }
+      return true;
+    },
   },
   session: {
     strategy: "jwt" as const,

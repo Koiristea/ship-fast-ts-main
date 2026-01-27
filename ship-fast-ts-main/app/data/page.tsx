@@ -1,52 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DataGrid from "@/components/DataGrid";
 import FileUploader from "@/components/FileUploader";
 
-// Datos de ejemplo - reemplaza con datos reales de tu API
-const sampleData = [
-  { id: 1, nombre: "Proyecto A", estado: "Activo", fecha: "2025-01-15", archivos: 3 },
-  { id: 2, nombre: "Proyecto B", estado: "Pendiente", fecha: "2025-01-20", archivos: 1 },
-  { id: 3, nombre: "Proyecto C", estado: "Completado", fecha: "2025-01-10", archivos: 5 },
-  { id: 4, nombre: "Proyecto D", estado: "Activo", fecha: "2025-01-25", archivos: 2 },
-];
+interface Purchase {
+  id: string;
+  fecha: string;
+  monto: number;
+  moneda: string;
+  estado: string;
+  enlace?: string | null;
+  tipo?: string;
+}
+
+interface DashboardData {
+  user: {
+    id?: string;
+    name?: string;
+    email?: string;
+    plan?: string | null;
+    hasAccess?: boolean;
+    customerId?: string | null;
+  } | null;
+  purchases: Purchase[];
+}
 
 export default function DataPage() {
-  const [data, setData] = useState(sampleData);
+  const [dashboard, setDashboard] = useState<DashboardData>({
+    user: null,
+    purchases: [],
+  });
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/purchases");
+        if (!res.ok) throw new Error("No se pudieron cargar los datos");
+
+        const json = await res.json();
+        setDashboard({
+          user: json.user ?? null,
+          purchases: json.purchases ?? [],
+        });
+      } catch (e) {
+        setError("No se pudieron cargar los datos reales");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleFilesUploaded = async (files: File[]) => {
     setUploadedFiles(files);
-    
-    // Aquí puedes hacer la llamada a tu API para procesar los archivos
+
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
 
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Archivos subidos exitosamente:', result);
-        // Actualizar la grilla con nuevos datos si es necesario
+        console.log("Archivos subidos exitosamente:", result);
       }
-    } catch (error) {
-      console.error('Error al subir archivos:', error);
+    } catch (uploadError) {
+      console.error("Error al subir archivos:", uploadError);
     }
   };
 
-  const columns = [
+  const purchaseColumns = [
     { key: "id", label: "ID" },
-    { key: "nombre", label: "Nombre" },
-    { key: "estado", label: "Estado" },
     { key: "fecha", label: "Fecha" },
-    { key: "archivos", label: "Archivos" },
+    {
+      key: "monto",
+      label: "Monto",
+      format: (value: number, row: Purchase) => `$${value.toFixed(2)} ${row.moneda}`,
+    },
+    { key: "tipo", label: "Tipo" },
+    { key: "estado", label: "Estado" },
+    {
+      key: "enlace",
+      label: "Comprobante",
+      format: (value?: string | null) =>
+        value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noreferrer"
+            className="link link-primary"
+          >
+            Ver
+          </a>
+        ) : (
+          "—"
+        ),
+    },
   ];
 
   return (
@@ -54,16 +113,54 @@ export default function DataPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold">
-            Gestión de Datos
-          </h1>
+          <div>
+            <p className="text-sm text-base-content/60">Panel privado</p>
+            <h1 className="text-3xl md:text-4xl font-extrabold">
+              Gestión de cuentas y compras
+            </h1>
+          </div>
         </div>
+
+        {/* Estado de carga / error */}
+        {loading && (
+          <div className="alert alert-info">Cargando datos reales...</div>
+        )}
+        {error && <div className="alert alert-error">{error}</div>}
+
+        {/* Resumen de cuenta */}
+        {dashboard.user && (
+          <div className="bg-base-100 rounded-lg shadow-lg p-6 grid gap-4 md:grid-cols-3">
+            <div>
+              <p className="text-sm text-base-content/60">Usuario</p>
+              <p className="font-semibold">{dashboard.user.name || "Sin nombre"}</p>
+              <p className="text-sm text-base-content/70">{dashboard.user.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/60">Plan</p>
+              <p className="font-semibold">{dashboard.user.plan ?? "Sin plan"}</p>
+              <p className="text-sm text-base-content/70">
+                Acceso: {dashboard.user.hasAccess ? "Activo" : "Inactivo"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/60">Stripe</p>
+              <p className="font-semibold">
+                {dashboard.user.customerId ? "Cliente registrado" : "Sin cliente"}
+              </p>
+              {dashboard.user.customerId && (
+                <p className="text-xs text-base-content/60 break-all">
+                  {dashboard.user.customerId}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* File Uploader */}
         <div className="bg-base-100 rounded-lg shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Subir Archivos</h2>
           <FileUploader onFilesSelected={handleFilesUploaded} />
-          
+
           {uploadedFiles.length > 0 && (
             <div className="mt-4">
               <p className="text-sm font-medium">
@@ -75,8 +172,16 @@ export default function DataPage() {
 
         {/* Data Grid */}
         <div className="bg-base-100 rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Datos</h2>
-          <DataGrid data={data} columns={columns} />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Compras</h2>
+            {!dashboard.user?.customerId && (
+              <span className="text-sm text-base-content/70">
+                Aún no hay cliente Stripe asociado a esta cuenta
+              </span>
+            )}
+          </div>
+
+          <DataGrid data={dashboard.purchases} columns={purchaseColumns} />
         </div>
       </div>
     </main>

@@ -33,7 +33,9 @@ export default function FileUploader({
     }
 
     // Validar tamaño de archivos
-    const oversizedFiles = filesArray.filter(file => file.size > maxSizeBytes);
+    const oversizedFiles = filesArray.filter(
+      (file) => file.size > maxSizeBytes,
+    );
     if (oversizedFiles.length > 0) {
       setError(`Algunos archivos exceden el tamaño máximo de ${maxSizeMB}MB`);
       return [];
@@ -78,7 +80,7 @@ export default function FileUploader({
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   return (
@@ -92,9 +94,10 @@ export default function FileUploader({
         className={`
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
           transition-all duration-200
-          ${isDragging
-            ? "border-primary bg-primary/10 scale-[1.02]"
-            : "border-base-300 hover:border-primary/50 hover:bg-base-200"
+          ${
+            isDragging
+              ? "border-primary bg-primary/10 scale-[1.02]"
+              : "border-base-300 hover:border-primary/50 hover:bg-base-200"
           }
         `}
       >
@@ -114,7 +117,9 @@ export default function FileUploader({
             />
           </svg>
           <div className="text-base-content">
-            <span className="font-medium text-primary">Haz clic para subir</span>
+            <span className="font-medium text-primary">
+              Haz clic para subir
+            </span>
             {" o arrastra y suelta"}
           </div>
           <p className="text-sm text-base-content/60">

@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: stripeSessionURL });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: e?.message }, { status: 500 });
+    console.error("Error en create-checkout:", e);
+    return NextResponse.json({ error: e?.message || "Error desconocido" }, { status: 500 });
   }
 }

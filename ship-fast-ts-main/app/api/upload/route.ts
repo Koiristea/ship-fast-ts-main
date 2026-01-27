@@ -8,10 +8,7 @@ export async function POST(req: NextRequest) {
     // Verificar autenticación
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -20,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (!files || files.length === 0) {
       return NextResponse.json(
         { error: "No se encontraron archivos" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -71,7 +68,7 @@ export async function POST(req: NextRequest) {
     console.error("Error al subir archivos:", error);
     return NextResponse.json(
       { error: "Error al procesar los archivos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -81,10 +78,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
     // Aquí deberías obtener los archivos de la base de datos
@@ -97,7 +91,19 @@ export async function GET(req: NextRequest) {
     console.error("Error al obtener archivos:", error);
     return NextResponse.json(
       { error: "Error al obtener los archivos" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
+
+// Stripe Webhook
+export async function STRIPE_WEBHOOK(req: NextRequest) {
+  const body = await req.text();
+  console.log("Received webhook:", body);
+  // Aquí puedes procesar el webhook de Stripe
+  // Por ejemplo, actualizar el estado de una transacción
+  return NextResponse.json({ success: true });
+}
+
+// Ejecutar el comando de Stripe
+// stripe listen --forward-to http://localhost:3000/api/webhook/stripe

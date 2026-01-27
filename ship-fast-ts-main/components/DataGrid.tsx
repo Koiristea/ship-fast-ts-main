@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 interface Column {
   key: string;
   label: string;
+  format?: (value: any, row: any) => ReactNode;
 }
 
 interface DataGridProps {
@@ -23,7 +24,11 @@ export default function DataGrid({ data, columns, onRowClick }: DataGridProps) {
   // Función de ordenamiento
   const handleSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "asc"
+    ) {
       direction = "desc";
     }
     setSortConfig({ key, direction });
@@ -32,7 +37,7 @@ export default function DataGrid({ data, columns, onRowClick }: DataGridProps) {
   // Aplicar ordenamiento
   const sortedData = [...data].sort((a, b) => {
     if (!sortConfig) return 0;
-    
+
     const aValue = a[sortConfig.key];
     const bValue = b[sortConfig.key];
 
@@ -48,10 +53,8 @@ export default function DataGrid({ data, columns, onRowClick }: DataGridProps) {
   // Aplicar búsqueda
   const filteredData = sortedData.filter((row) =>
     columns.some((column) =>
-      String(row[column.key])
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    )
+      String(row[column.key]).toLowerCase().includes(searchTerm.toLowerCase()),
+    ),
   );
 
   return (
@@ -102,10 +105,16 @@ export default function DataGrid({ data, columns, onRowClick }: DataGridProps) {
                 <tr
                   key={row.id || index}
                   onClick={() => onRowClick?.(row)}
-                  className={onRowClick ? "cursor-pointer hover:bg-base-200" : ""}
+                  className={
+                    onRowClick ? "cursor-pointer hover:bg-base-200" : ""
+                  }
                 >
                   {columns.map((column) => (
-                    <td key={column.key}>{row[column.key]}</td>
+                    <td key={column.key}>
+                      {column.format
+                        ? column.format(row[column.key], row)
+                        : row[column.key]}
+                    </td>
                   ))}
                 </tr>
               ))

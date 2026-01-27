@@ -18,13 +18,19 @@ export async function POST(req: Request) {
     try {
       await connectMongo();
 
-      const user = await User.findById(id);
+      let user = await User.findById(id);
 
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
       user.email = body.email;
+
+      // Ensure hasAccess is always initialized
+      if (user.hasAccess === undefined || user.hasAccess === null) {
+        user.hasAccess = false;
+      }
+
       await user.save();
 
       return NextResponse.json({ data: user }, { status: 200 });
@@ -32,7 +38,7 @@ export async function POST(req: Request) {
       console.error(e);
       return NextResponse.json(
         { error: "Something went wrong" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } else {

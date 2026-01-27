@@ -28,12 +28,16 @@ export const createCheckout = async ({
   priceId,
   couponId,
 }: CreateCheckoutParams): Promise<string> => {
-  try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2023-08-16", // TODO: update this when Stripe updates their API
-      typescript: true,
-    });
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY no está configurada en las variables de entorno");
+  }
 
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-08-16", // TODO: update this when Stripe updates their API
+    typescript: true,
+  });
+
+  const buildExtraParams = (useCustomer: boolean) => {
     const extraParams: {
       customer?: string;
       customer_creation?: "always";
@@ -43,7 +47,7 @@ export const createCheckout = async ({
       tax_id_collection?: { enabled: boolean };
     } = {};
 
-    if (user?.customerId) {
+    if (useCustomer && user?.customerId) {
       extraParams.customer = user.customerId;
     } else {
       if (mode === "payment") {
@@ -58,6 +62,10 @@ export const createCheckout = async ({
       extraParams.tax_id_collection = { enabled: true };
     }
 
+    return extraParams;
+  };
+
+  try {
     const stripeSession = await stripe.checkout.sessions.create({
       mode,
       allow_promotion_codes: true,
@@ -77,13 +85,53 @@ export const createCheckout = async ({
         : [],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      ...extraParams,
+      ...buildExtraParams(true),
     });
 
     return stripeSession.url;
-  } catch (e) {
-    console.error(e);
-    return null;
+  } catch (e: any) {
+    // If customer is invalid/missing, retry without passing the customerId so Stripe creates/uses a new one
+    const isMissingCustomer =
+      e?.code === "resource_missing" && e?.param === "customer";
+
+    if (isMissingCustomer) {
+      console.warn(
+        "Retrying checkout without customerId due to missing customer",
+      );
+      try {
+        const retrySession = await stripe.checkout.sessions.create({
+          mode,
+          allow_promotion_codes: true,
+          client_reference_id: clientReferenceId,
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          discounts: couponId
+            ? [
+                {
+                  coupon: couponId,
+                },
+              ]
+            : [],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          ...buildExtraParams(false),
+        });
+        return retrySession.url;
+      } catch (retryError) {
+        console.error(
+          "Retry without customerId failed when creating checkout session:",
+          retryError,
+        );
+        return null;
+      }
+    }
+
+    console.error("Error creating Stripe checkout session:", e);
+    throw e;
   }
 };
 

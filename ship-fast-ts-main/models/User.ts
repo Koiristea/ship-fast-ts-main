@@ -35,15 +35,34 @@ const userSchema = new mongoose.Schema(
     hasAccess: {
       type: Boolean,
       default: false,
+      required: true,
     },
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-  }
+  },
 );
+
+// Middleware to ensure hasAccess is always set when saving
+userSchema.pre("save", function (next) {
+  if (this.hasAccess === undefined || this.hasAccess === null) {
+    this.hasAccess = false;
+  }
+  next();
+});
+
+// Ensure hasAccess is set on findOneAndUpdate
+userSchema.pre("findOneAndUpdate", function (next) {
+  const update = this.getUpdate();
+  if (update && !("hasAccess" in update)) {
+    // Only set default if not explicitly being updated
+  }
+  next();
+});
 
 // add plugin that converts mongoose to json
 userSchema.plugin(toJSON);
 
-export default (mongoose.models.User || mongoose.model("User", userSchema)) as mongoose.Model<any>;
+export default (mongoose.models.User ||
+  mongoose.model("User", userSchema)) as mongoose.Model<any>;

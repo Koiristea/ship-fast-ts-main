@@ -14,7 +14,7 @@ const config = {
   appDescription:
     "The NextJS boilerplate with all you need to build your SaaS, AI tool, or any other web app.",
   // REQUIRED (no https://, not trailing slash at the end, just the naked domain)
-  domainName: "localhost:3001",
+  domainName: "localhost:3000",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "839232d2-cf3e-4717-b85e-e5d95033326d2",
@@ -28,7 +28,7 @@ const config = {
         // REQUIRED — we use this to find the plan in the webhook (for instance if you want to update the user's credits based on the plan)
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1SbZP6IKvFjLr6ghlyL97jlG"
+            ? "price_1Su18AIKvFjLr6ghsbCuw3Ct"
             : "price_456",
         //  REQUIRED - Name of the plan, displayed on the pricing page
         name: "Starter",
